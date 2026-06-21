@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Interactive Reading Studio</title>
+  <style>
+    :root {
+      --ink: #243044;
+      --muted: #766b5e;
+      --line: #eadbc8;
+      --peach: #ff9f7f;
+      --peach-dark: #ee7556;
+      --yellow: #ffe4a8;
+      --mint: #d9f4e9;
+      --sky: #dcecff;
+      --pink: #ffe3ee;
+      --green: #e9f8dc;
+      --lav: #efe6ff;
+      --shadow: 0 22px 55px rgba(119, 83, 45, .13);
+      --soft-shadow: 0 10px 26px rgba(119, 83, 45, .08);
+      --radius: 28px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 44px 0 0;
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(255, 218, 135, .55), transparent 20%),
+        radial-gradient(circle at 92% 10%, rgba(255, 202, 222, .62), transparent 18%),
+        radial-gradient(circle at 82% 80%, rgba(205, 235, 255, .65), transparent 24%),
+        linear-gradient(180deg, #fff8ee 0%, #fffdf9 52%, #f7fbff 100%);
+      min-height: 100vh;
+      line-height: 1.7;
+    }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 0 18px; }
+    header { padding: 20px 0 18px; }
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 16px;
+      align-items: center;
+      min-height: 236px;
+      padding: 30px 34px;
+      border: 1px solid rgba(234, 219, 200, .95);
+      border-radius: 34px;
+      background: linear-gradient(135deg, rgba(255,255,255,.82), rgba(255,248,238,.95)), linear-gradient(135deg, #fff2e4, #f5fbff);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      left: -34px;
+      bottom: -50px;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: rgba(255, 228, 168, .7);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      top: -36px;
+      right: -38px;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: rgba(217, 244, 233, .92);
+    }
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 54px 0 0;
+      font-size: clamp(36px, 4.1vw, 54px);
+      line-height: 1.08;
+      letter-spacing: -0.055em;
+      color: #283449;
+      max-width: 800px;
+      word-break: keep-all;
+    }
+    .hero-tag {
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      z-index: 3;
+      font-size: 15px;
+      font-weight: 900;
+      color: #8a5f35;
+      background: rgba(255,255,255,.86);
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid #ecdac7;
+      box-shadow: 0 6px 14px rgba(119, 83, 45, .08);
+    }
+    .hero-art { position: relative; z-index: 1; display: grid; place-items: center; min-height: 190px; }
+    .hero-art svg { width: 100%; max-width: 350px; height: auto; }
+    main { padding: 6px 0 42px; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, .84fr) minmax(460px, 1.16fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .card {
+      background: rgba(255, 255, 255, .90);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--soft-shadow);
+      padding: 22px;
+      backdrop-filter: blur(8px);
+    }
+    .input-card { position: sticky; top: 18px; }
+    .card-title { margin: 0 0 14px; font-size: 26px; line-height: 1.25; letter-spacing: -0.04em; }
+    label.group-label { display: block; margin: 18px 0 9px; color: #5f5144; font-size: 17px; font-weight: 900; }
+    textarea {
+      width: 100%; min-height: 360px; resize: vertical; border: 1.5px solid #eadbc8; border-radius: 24px; padding: 18px;
+      background: #fffefb; color: var(--ink); font: inherit; line-height: 1.72; outline: none; box-shadow: inset 0 2px 8px rgba(120, 80, 30, .03);
+    }
+    textarea:focus { border-color: #ffb28e; box-shadow: 0 0 0 6px rgba(255, 159, 127, .14), inset 0 2px 8px rgba(120, 80, 30, .03); }
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .choice {
+      display: flex; gap: 10px; align-items: center; min-height: 54px; padding: 12px 14px; border: 1px solid #eadbc8; border-radius: 18px;
+      background: linear-gradient(180deg, #fffdf8, #fff8ef); color: #4b4037; font-size: 16px; font-weight: 850; cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .choice:hover { transform: translateY(-1px); border-color: #ffbea3; }
+    .choice input { width: 18px; height: 18px; accent-color: var(--peach-dark); flex: 0 0 auto; }
+    .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    button {
+      appearance: none; border: 0; border-radius: 17px; padding: 12px 16px; font: inherit; font-size: 16px; font-weight: 950; cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(83, 62, 43, .13); }
+    .primary { color: white; background: linear-gradient(135deg, var(--peach), var(--peach-dark)); }
+    .plain { color: #5c5147; background: #f7efe5; border: 1px solid #eadbc8; }
+    .result-card { min-height: 720px; }
+    .result-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
+    .status { display: inline-flex; align-items: center; gap: 10px; color: #66594d; font-size: 22px; font-weight: 900; }
+    .dot { width: 12px; height: 12px; border-radius: 999px; background: #c8bdaf; }
+    .dot.loading { background: #ff9f7f; animation: pulse 1s infinite; }
+    .dot.ok { background: #62bf90; }
+    .dot.fail { background: #f37b7b; }
+    @keyframes pulse { 50% { opacity: .35; transform: scale(.85); } }
+    .result { display: grid; gap: 18px; }
+    .empty {
+      min-height: 590px; display: grid; place-items: center; text-align: center; border: 2px dashed #e8d7c4; border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,248,238,.88)), repeating-linear-gradient(-45deg, rgba(255,228,168,.16) 0, rgba(255,228,168,.16) 14px, rgba(255,255,255,.16) 14px, rgba(255,255,255,.16) 28px);
+      color: #827364; padding: 26px;
+    }
+    .empty h2 { margin: 10px 0 0; font-size: 24px; letter-spacing: -0.04em; }
+    .section { border: 1px solid #eadbc8; border-radius: 24px; padding: 18px; background: #fffefb; box-shadow: 0 8px 20px rgba(119, 83, 45, .05); }
+    .section-title {
+      display: inline-flex; align-items: center; gap: 8px; margin: 0 0 16px; padding: 9px 14px; border-radius: 999px; background: #fff1df;
+      color: #8b5a31; font-size: 28px; font-weight: 950; letter-spacing: -0.03em;
+    }
+    .passage-box { padding: 18px; border: 1px solid #e6ddcf; border-radius: 20px; background: #fffefb; white-space: pre-wrap; font-size: 17px; }
+    .sentence-list, .flow-list, .vocab-grid { display: grid; gap: 12px; }
+    .sentence {
+      padding: 16px; border-radius: 22px; border: 1px solid #efdcc8; background: linear-gradient(180deg, #fff9f2, #ffffff);
+    }
+    .sentence-head { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+    .sentence-num { font-size: 14px; font-weight: 850; color: #6f6357; }
+    .role {
+      display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 14px; background: #dff2e6; color: #236044; font-size: 18px; font-weight: 950;
+      white-space: nowrap;
+    }
+    .sentence-text { margin: 0; color: #384152; font-size: 19px; line-height: 2.0; }
+
+    .context-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: -4px 0 14px;
+      color: #6b5a49;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: #fff8ef;
+      border: 1px solid #eadbc8;
+    }
+
+    .keyword-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .keyword-chip {
+      display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 12px; font-size: 13px; font-weight: 800; border: 1px solid #eadbc8; background: #fff;
+    }
+    .flow { padding: 15px 16px; border: 1px solid #e2eddf; border-radius: 19px; background: linear-gradient(180deg, #fafff6, #ffffff); }
+    .flow b, .topic-label, .summary-label, .vocab b { display: block; margin-bottom: 6px; color: #7c5c3e; font-size: 16px; }
+    .flow div { font-size: 17px; }
+    .summary, .topic { padding: 18px; border: 1px solid #e1e8f5; border-radius: 20px; background: linear-gradient(180deg, #f7fbff, #ffffff); }
+    .summary p, .topic p { margin: 0; font-size: 18px; }
+    .topic p + p { margin-top: 10px; }
+    .vocab-grid { grid-template-columns: 1fr 1fr; }
+    .vocab { padding: 15px; border: 1px solid #dbeee5; border-radius: 20px; background: linear-gradient(180deg, #f8fff9, #ffffff); }
+    .word { margin-bottom: 2px; color: #1f5c43; font-size: 21px; font-weight: 1000; }
+    .muted { color: var(--muted); font-size: 15px; }
+    .hl { padding: 3px 8px; border-radius: 10px; display: inline-block; margin: 1px 2px; font-weight: 900; box-shadow: inset 0 0 0 1px rgba(90,70,40,.08); }
+    .c0 { background: #ffe4b8; }
+    .c1 { background: #d8f4df; }
+    .c2 { background: #dde8ff; }
+    .c3 { background: #ffddea; }
+    .c4 { background: #ebe2ff; }
+    .c5 { background: #fff0bf; }
+    .print-only { display: none; }
+    @media (max-width: 1100px) {
+      .hero, .layout { grid-template-columns: 1fr; }
+      .hero-art { min-height: 140px; }
+      .input-card { position: static; }
+      h1 { max-width: 100%; }
+      .hero-tag {
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      z-index: 3;
+      font-size: 15px;
+      font-weight: 900;
+      color: #8a5f35;
+      background: rgba(255,255,255,.86);
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid #ecdac7;
+      box-shadow: 0 6px 14px rgba(119, 83, 45, .08);
+    }
+    @media (max-width: 620px) {
+      .wrap { padding: 0 12px; }
+      .hero { padding: 22px 20px; border-radius: 26px; }
+      .card { padding: 17px; border-radius: 23px; }
+      .choice-grid, .vocab-grid { grid-template-columns: 1fr; }
+      .buttons button { flex: 1 1 100%; }
+      textarea { min-height: 280px; }
+      .status { font-size: 18px; }
+      .section-title { font-size: 21px; }
+      .sentence-text, .summary p, .topic p, .flow div { font-size: 16px; }
+    }
+    @media print {
+      header, .input-card, .result-top { display: none !important; }
+      body { background: white; }
+      .card, .section { box-shadow: none; }
+      .result-card { border: 0; }
+      .section, .sentence, .vocab, .summary, .topic, .flow { break-inside: avoid; }
+      .print-only { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <section class="hero">
+        <div class="hero-tag">지수T와 함께하는 생생한 영어수업</div>
+        <div>
+          <h1>AI Interactive Reading Studio</h1>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <svg viewBox="0 0 520 310" role="img">
+            <rect x="18" y="20" width="484" height="260" rx="34" fill="#fff8ee"/>
+            <circle cx="84" cy="68" r="28" fill="#ffe2a8"/>
+            <circle cx="444" cy="73" r="22" fill="#ffdceb"/>
+            <circle cx="408" cy="42" r="12" fill="#d8ecff"/>
+            <path d="M95 226c30-35 68-52 116-52 38 0 67 12 94 36 27-24 56-36 94-36 47 0 86 17 116 52v31H95z" fill="#fffdf8" stroke="#edd9c5" stroke-width="4"/>
+            <path d="M95 226c0-28 15-49 42-62 25-12 58-8 93 11v83c-41-20-78-25-112-12-13 5-23 11-23 11z" fill="#fff6e7"/>
+            <path d="M515 226c0-28-15-49-42-62-25-12-58-8-93 11v83c41-20 78-25 112-12 13 5 23 11 23 11z" fill="#fff6e7"/>
+            <line x1="305" y1="184" x2="305" y2="258" stroke="#edd9c5" stroke-width="4"/>
+            <rect x="97" y="91" width="130" height="82" rx="20" fill="#dcecff" stroke="#c6ddf9"/>
+            <rect x="122" y="112" width="80" height="10" rx="5" fill="#ffffff"/>
+            <rect x="122" y="133" width="58" height="10" rx="5" fill="#ffffff"/>
+            <circle cx="158" cy="82" r="24" fill="#ffb294"/>
+            <text x="146" y="89" font-size="20" font-weight="900" fill="#8a3e2d">A</text>
+            <rect x="280" y="75" width="130" height="94" rx="20" fill="#d9f4e9" stroke="#bee6d8"/>
+            <rect x="303" y="100" width="83" height="10" rx="5" fill="#ffffff"/>
+            <rect x="303" y="123" width="58" height="10" rx="5" fill="#ffffff"/>
+            <circle cx="386" cy="179" r="24" fill="#ffe0a3"/>
+            <text x="374" y="186" font-size="20" font-weight="900" fill="#765118">B</text>
+            <rect x="201" y="111" width="118" height="78" rx="20" fill="#ffe4ef" stroke="#f7cbdc"/>
+            <path d="M230 145h58M230 164h42" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="253" cy="99" r="19" fill="#bde7ff"/>
+            <text x="243" y="105" font-size="16" font-weight="900" fill="#245c75">C</text>
+            <path d="M73 116c21 8 30 18 28 31M437 132c-18 8-25 19-21 34" fill="none" stroke="#eacfb5" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="62" cy="116" r="8" fill="#ff9f7f"/>
+            <circle cx="448" cy="128" r="8" fill="#95d9c4"/>
+            <text x="206" y="257" font-size="14" font-weight="800" fill="#9a7654">read · think · organize</text>
+          </svg>
+        </div>
+      </section>
+    </div>
+  </header>
+  <main>
+    <div class="wrap">
+      <section class="layout">
+        <article class="card input-card">
+          <h2 class="card-title">영어 지문 입력</h2>
+          <textarea id="passageInput" placeholder="여기에 영어 지문을 붙여넣으세요."></textarea>
+          <label class="group-label">AI 분석 자료 선택</label>
+          <div class="choice-grid">
+            <label class="choice"><input type="checkbox" name="sections" value="context" checked> 글의 맥락</label>
+            <label class="choice"><input type="checkbox" name="sections" value="flowStructure" checked> 전체 흐름</label>
+            <label class="choice"><input type="checkbox" name="sections" value="summarySentence" checked> 요약 문장</label>
+            <label class="choice"><input type="checkbox" name="sections" value="topic" checked> 글의 주제</label>
+            <label class="choice"><input type="checkbox" name="sections" value="vocabulary" checked> 단어 정리</label>
+          </div>
+          <div class="buttons">
+            <button class="primary" id="analyzeBtn">지문 분석</button>
+            <button class="plain" id="resetBtn">초기화</button>
+          </div>
+        </article>
+        <article class="card result-card">
+          <div class="result-top">
+            <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">분석 대기 중</span></div>
+            <div class="buttons" style="margin:0">
+              <button class="plain" id="copyBtn">분석 자료 복사</button>
+              <button class="plain" id="printBtn">인쇄/PDF</button>
+            </div>
+          </div>
+          <section id="resultArea" class="empty">
+            <div>
+              <svg width="190" viewBox="0 0 260 180" aria-hidden="true">
+                <rect x="44" y="71" width="170" height="78" rx="18" fill="#fff8ee" stroke="#ead6c1" stroke-width="3"/>
+                <path d="M54 143V79c0-10 7-17 17-17h48c12 0 24 6 33 16 9-10 21-16 33-16h8c10 0 17 7 17 17v64" fill="#fffdf8" stroke="#ead6c1" stroke-width="4"/>
+                <line x1="132" y1="75" x2="132" y2="146" stroke="#ead6c1" stroke-width="4"/>
+                <circle cx="54" cy="39" r="17" fill="#ffe4a8"/>
+                <circle cx="205" cy="42" r="18" fill="#d9f4e9"/>
+                <circle cx="226" cy="70" r="12" fill="#dcecff"/>
+                <path d="M82 100h34M82 119h26M154 100h32M154 119h23" stroke="#efdac3" stroke-width="7" stroke-linecap="round"/>
+              </svg>
+              <h2>분석 결과가 여기에 표시됩니다.</h2>
+            </div>
+          </section>
+        </article>
+      </section>
+    </div>
+  </main>
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAfWL0iiBxTh9ixjBU0f8V0mGTvO9N0GtA1bcfyf13zXbaml8q-zMWlMoilxJYo4bX/exec";
+    const $ = (id) => document.getElementById(id);
+    let latestResult = null;
+    let latestPassage = "";
+    const STOP = new Set(['the','and','that','this','with','from','have','has','are','was','were','will','would','could','should','there','their','they','them','than','then','into','also','only','very','more','most','many','much','about','when','what','which','while','where','between','through','some','such','itself','actually','those','these','being','your','just','people','students','student']);
+    const VOCAB = {
+      digital: { meaning: '디지털의', pos: '형용사', syn: ['online', 'electronic'] },
+      technology: { meaning: '기술', pos: '명사', syn: ['tech', 'innovation'] },
+      weakening: { meaning: '약화시키는', pos: '동사', syn: ['weaken', 'reduce'] },
+      habits: { meaning: '습관', pos: '명사', syn: ['habit', 'routine'] },
+      information: { meaning: '정보', pos: '명사', syn: ['data', 'knowledge'] },
+      concentration: { meaning: '집중력', pos: '명사', syn: ['focus', 'attention'] },
+      support: { meaning: '지원하다', pos: '동사', syn: ['help', 'assist'] },
+      identify: { meaning: '파악하다', pos: '동사', syn: ['recognize', 'find'] },
+      structure: { meaning: '구조', pos: '명사', syn: ['organization', 'framework'] },
+      vocabulary: { meaning: '어휘', pos: '명사', syn: ['word', 'lexis'] },
+      interactive: { meaning: '상호작용적인', pos: '형용사', syn: ['engaging', 'responsive'] },
+      analyze: { meaning: '분석하다', pos: '동사', syn: ['examine', 'inspect'] },
+      function: { meaning: '기능', pos: '명사', syn: ['role', 'purpose'] },
+      topic: { meaning: '주제', pos: '명사', syn: ['subject', 'theme'] },
+      supportings: { meaning: '뒷받침', pos: '명사', syn: ['support', 'evidence'] },
+      example: { meaning: '예시', pos: '명사', syn: ['instance', 'illustration'] },
+      conclusion: { meaning: '결론', pos: '명사', syn: ['ending', 'result'] },
+      active: { meaning: '능동적인', pos: '형용사', syn: ['engaged', 'dynamic'] },
+      meaningful: { meaning: '의미 있는', pos: '형용사', syn: ['valuable', 'significant'] },
+      experience: { meaning: '경험', pos: '명사', syn: ['activity', 'encounter'] }
+    };
+
+    function selectedSections() {
+      return [...document.querySelectorAll('input[name="sections"]:checked')].map(el => el.value);
+    }
+    function setStatus(type, text) {
+      $('statusDot').className = 'dot' + (type ? ' ' + type : '');
+      $('statusText').textContent = text;
+    }
+    function splitSentences(text) {
+      return (text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || []).map(s => s.trim()).filter(Boolean);
+    }
+    function tokenize(text) {
+      return (text.toLowerCase().match(/[a-z][a-z-]{2,}/g) || []).map(w => w.replace(/^-|-$/g, '')).filter(w => !STOP.has(w));
+    }
+    function topWords(words, limit = 4) {
+      const freq = {};
+      words.forEach(w => freq[w] = (freq[w] || 0) + 1);
+      return Object.entries(freq).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, limit).map(([word]) => word);
+    }
+    function markers(sentence) {
+      const lower = sentence.toLowerCase();
+      return ['because','as a result','however','in addition','for example','therefore','but','so','while','although'].filter(m => lower.includes(m));
+    }
+    function role(sentence, index, total) {
+      const s = sentence.toLowerCase();
+      if (index === 0) return '중심 소재 제시';
+      if (s.includes('for example') || s.includes('for instance')) return '예시 제시';
+      if (s.includes('however') || s.includes('but') || s.includes('although') || s.includes('while')) return '대조/전환';
+      if (s.includes('because') || s.includes('as a result') || s.includes('in addition') || s.includes('so')) return '세부 설명';
+      if (s.includes('therefore') || s.includes('thus') || index === total - 1) return '결론/정리';
+      return '부연 설명';
+    }
+    function normalizeBaseForm(word, posLabel='') {
+      let w = String(word || '').toLowerCase();
+      if (!w) return w;
+      if (posLabel.includes('동사')) {
+        if (w.endsWith('ing') && w.length > 5) {
+          w = w.slice(0, -3);
+          if (/([b-df-hj-np-tv-z])\1$/.test(w)) w = w.slice(0, -1);
+          if (!w.endsWith('e') && /at|it|iz|us|ur/.test(w.slice(-2))) w += 'e';
+        } else if (w.endsWith('ied')) {
+          w = w.slice(0, -3) + 'y';
+        } else if (w.endsWith('ed') && w.length > 4) {
+          w = w.slice(0, -2);
+          if (/([b-df-hj-np-tv-z])\1$/.test(w)) w = w.slice(0, -1);
+          if (!w.endsWith('e')) w += 'e';
+        } else if (w.endsWith('s') && !w.endsWith('ss')) {
+          w = w.slice(0, -1);
+        }
+      } else {
+        if (w.endsWith('ies') && w.length > 4) w = w.slice(0, -3) + 'y';
+        else if (w.endsWith('ses') && w.length > 4) w = w.slice(0, -2);
+        else if (w.endsWith('s') && !w.endsWith('ss') && !w.endsWith('us') && !w.endsWith('is')) w = w.slice(0, -1);
+      }
+      return w;
+    }
+    function guessPOS(word) {
+      if (VOCAB[word]) return VOCAB[word].pos;
+      if (word.endsWith('ly')) return '부사';
+      if (word.endsWith('tion') || word.endsWith('ity') || word.endsWith('ness') || word.endsWith('ment')) return '명사';
+      if (word.endsWith('ing') || word.endsWith('ed')) return '동사';
+      if (word.endsWith('ive') || word.endsWith('al') || word.endsWith('ful') || word.endsWith('ous')) return '형용사';
+      return '명사';
+    }
+    function meaning(word) { return VOCAB[word]?.meaning || '문맥 속 의미 확인'; }
+    function synonyms(word) { return VOCAB[word]?.syn || ['related', 'similar']; }
+
+    function makePreviewAnalysis(text) {
+      const sentences = splitSentences(text);
+      const tokensBySentence = sentences.map(tokenize);
+      const sentenceAnalyses = sentences.map((sentence, i) => {
+        const current = tokensBySentence[i];
+        const before = tokensBySentence[i - 1] || [];
+        const after = tokensBySentence[i + 1] || [];
+        const connected = [...new Set(current.filter(w => before.includes(w) || after.includes(w)))];
+        return {
+          sentenceNumber: i + 1,
+          sentence,
+          coreWords: topWords(current, 4),
+          connectionKeywords: [...new Set([...markers(sentence), ...connected])].slice(0, 4),
+          sentenceRole: role(sentence, i, sentences.length)
+        };
+      });
+      return {
+        sentenceAnalyses,
+        flowStructure: buildFlow(sentenceAnalyses),
+        topic: buildTopic(sentenceAnalyses),
+        summarySentence: buildSummary(sentenceAnalyses),
+        vocabulary: buildVocabulary(sentenceAnalyses)
+      };
+    }
+    function buildFlow(items) {
+      const labels = {'중심 소재 제시':'중심 소재','세부 설명':'세부 설명','부연 설명':'부연 설명','예시 제시':'예시/근거','대조/전환':'전환','결론/정리':'결론'};
+      const suffix = {'중심 소재':'제시','세부 설명':'설명','부연 설명':'보충','예시/근거':'제시','전환':'전환','결론':'정리'};
+      const used = new Set();
+      const flow = [];
+      items.forEach(item => {
+        const label = labels[item.sentenceRole] || '세부 설명';
+        if (!used.has(label)) {
+          used.add(label);
+          flow.push({ label, description: `${label}: ${trim(item.sentence, 95)} ${suffix[label]}` });
+        }
+      });
+      return flow;
+    }
+    function buildTopic(items) {
+      const words = topWords(items.flatMap(item => item.coreWords || []), 3);
+      const english = words.length ? `${capitalize(words[0])} and ${words.slice(1).join(' ')}` : 'Main Theme of the Passage';
+      const korean = words.length ? `${words.join(', ')}를 중심으로 한 글의 주제` : '글의 중심 주제';
+      return { korean, english };
+    }
+    function buildSummary(items) {
+      if (!items.length) return '';
+      const first = trim(items[0].sentence, 78);
+      const last = trim(items[items.length - 1].sentence, 78);
+      return `${first} 그리고 ${last}`;
+    }
+    function buildVocabulary(items) {
+      const words = topWords(items.flatMap(item => item.coreWords || []), 8);
+      return words.map(word => {
+        const pos = guessPOS(word);
+        const base = normalizeBaseForm(word, pos);
+        return { word: base, partOfSpeech: pos, meaning: meaning(base) || meaning(word), synonyms: synonyms(base) };
+      });
+    }
+    function trim(text, max) { return text.length > max ? text.slice(0, max - 1) + '…' : text; }
+    function capitalize(word) { return word ? word.charAt(0).toUpperCase() + word.slice(1) : ''; }
+
+    async function callAppsScript(text, sections) {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ text, selectedSections: sections })
+      });
+      if (!res.ok) throw new Error('Apps Script response error');
+      return await res.json();
+    }
+    async function analyze() {
+      const text = $('passageInput').value.trim();
+      const sections = selectedSections();
+      if (!text) return alert('영어 지문을 입력하세요.');
+      if (!sections.length) return alert('AI 분석 자료를 한 개 이상 선택하세요.');
+      latestPassage = text;
+      setStatus('loading', '분석 중');
+      try {
+        if (!APPS_SCRIPT_URL) throw new Error('Apps Script URL is empty');
+        latestResult = await callAppsScript(text, sections);
+        setStatus('ok', '분석 완료');
+      } catch (e) {
+        latestResult = makePreviewAnalysis(text);
+        setStatus('fail', '분석 완료');
+      }
+      render(latestResult, sections);
+    }
+
+    function classifyContextWord(word) {
+      const key = String(word || '').toLowerCase();
+      if (['however','but','although','while','whereas','yet'].includes(key)) return 'c3';
+      if (['because','since'].includes(key)) return 'c0';
+      if (['therefore','thus','so','as a result'].includes(key)) return 'c5';
+      if (['in addition','moreover','furthermore','also'].includes(key)) return 'c1';
+      if (['for example','for instance','such as'].includes(key)) return 'c2';
+      return null;
+    }
+
+    function buildColorMap(sentenceAnalyses) {
+      const pool = ['c0','c1','c2','c4','c5','c3'];
+      const map = {};
+      const freq = {};
+      sentenceAnalyses.forEach(item => {
+        [...(item.coreWords || []), ...(item.connectionKeywords || [])].forEach(word => {
+          const key = String(word || '').toLowerCase();
+          if (!key) return;
+          freq[key] = (freq[key] || 0) + 1;
+        });
+      });
+      Object.keys(freq).forEach(word => {
+        const ctx = classifyContextWord(word);
+        if (ctx) map[word] = ctx;
+      });
+      let idx = 0;
+      Object.keys(freq).sort((a,b) => (freq[b]-freq[a]) || a.localeCompare(b)).forEach(word => {
+        if (!map[word]) {
+          map[word] = pool[idx % pool.length];
+          idx += 1;
+        }
+      });
+      return map;
+    }
+
+    function highlightSentenceText(sentence, words, colorMap) {
+      let html = escapeHtml(sentence);
+      const uniqueWords = [...new Set((words || []).filter(Boolean))]
+        .filter(word => String(word).length > 1)
+        .sort((a,b) => b.length - a.length);
+      uniqueWords.forEach(word => {
+        const escapedWord = String(word).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const cls = colorMap[String(word).toLowerCase()] || 'c0';
+        const regex = new RegExp(`\b(${escapedWord})\b`, 'gi');
+        html = html.replace(regex, `<span class="hl ${cls}">$1</span>`);
+      });
+      return html;
+    }
+
+    function render(data, sections) {
+      const resultArea = $('resultArea');
+      resultArea.className = 'result';
+      const colorMap = buildColorMap(data.sentenceAnalyses || []);
+      const topic = typeof data.topic === 'string' ? { korean: data.topic, english: 'Main Theme of the Passage' } : (data.topic || { korean:'', english:'' });
+      let html = '';
+      if (latestPassage) {
+        html += `<section class="section print-only"><div class="section-title">영어 지문</div><div class="passage-box">${escapeHtml(latestPassage)}</div></section>`;
+      }
+      if (sections.includes('context')) {
+        html += `
+          <section class="section">
+            <div class="section-title">글의 맥락</div>
+            <div class="context-legend"><span class="legend-chip c0">원인/중심</span><span class="legend-chip c3">대조/전환</span><span class="legend-chip c5">결과/결론</span><span class="legend-chip c2">예시</span></div>
+            <div class="sentence-list">
+              ${(data.sentenceAnalyses || []).map(item => {
+                const words = [...(item.coreWords || item.keyKeywords || []), ...(item.connectionKeywords || [])];
+                return `
+                <article class="sentence">
+                  <div class="sentence-head">
+                    <span class="role">${escapeHtml(item.sentenceRole || '')}</span>
+                    <span class="sentence-num">문장 ${item.sentenceNumber}</span>
+                  </div>
+                  <p class="sentence-text">${highlightSentenceText(item.sentence || '', words, colorMap)}</p>
+                  <div class="keyword-row">
+                    ${(item.coreWords || item.keyKeywords || []).map(word => `<span class="keyword-chip ${colorMap[String(word).toLowerCase()] || 'c0'}">${escapeHtml(word)}</span>`).join('')}
+                    ${(item.connectionKeywords || []).map(word => `<span class="keyword-chip ${colorMap[String(word).toLowerCase()] || 'c1'}">${escapeHtml(word)}</span>`).join('')}
+                  </div>
+                </article>`;
+              }).join('')}
+            </div>
+          </section>`;
+      }
+      if (sections.includes('flowStructure')) {
+        html += `
+          <section class="section">
+            <div class="section-title">전체 흐름</div>
+            <div class="flow-list">
+              ${(data.flowStructure || []).map(item => `<div class="flow"><b>${escapeHtml(item.label || '')}</b><div>${escapeHtml(item.description || '')}</div></div>`).join('')}
+            </div>
+          </section>`;
+      }
+      if (sections.includes('summarySentence')) {
+        html += `<section class="section"><div class="section-title">요약 문장</div><div class="summary"><p>${escapeHtml(data.summarySentence || '')}</p></div></section>`;
+      }
+      if (sections.includes('topic')) {
+        html += `
+          <section class="section">
+            <div class="section-title">글의 주제</div>
+            <div class="topic">
+              <b class="topic-label">한국어</b>
+              <p>${escapeHtml(topic.korean || '')}</p>
+              <b class="topic-label" style="margin-top:12px;">English</b>
+              <p>${escapeHtml(topic.english || '')}</p>
+            </div>
+          </section>`;
+      }
+      if (sections.includes('vocabulary')) {
+        html += `
+          <section class="section">
+            <div class="section-title">단어 정리</div>
+            <div class="vocab-grid">
+              ${(data.vocabulary || []).map(item => {
+                const pos = item.partOfSpeech || guessPOS(item.word || '');
+                const base = normalizeBaseForm(item.word || '', pos);
+                return `<div class="vocab"><div class="word">${escapeHtml(base)}</div><div class="muted">${escapeHtml(pos)}</div><div style="margin-top:9px;"><b>뜻</b>${escapeHtml(item.meaning || meaning(base))}</div><div style="margin-top:9px;"><b>동의어</b>${escapeHtml((item.synonyms || synonyms(base)).join(', '))}</div></div>`;
+              }).join('')}
+            </div>
+          </section>`;
+      }
+      resultArea.innerHTML = html || '<div class="empty"><h2>선택된 항목이 없습니다.</h2></div>';
+    }
+
+    function worksheet(data, sections) {
+      if (!data) return '';
+      const topic = typeof data.topic === 'string' ? { korean: data.topic, english: 'Main Theme of the Passage' } : (data.topic || { korean:'', english:'' });
+      const lines = ['AI Interactive Reading Studio', ''];
+      if (latestPassage) {
+        lines.push('[영어 지문]');
+        lines.push(latestPassage);
+        lines.push('');
+      }
+      if (sections.includes('context')) {
+        lines.push('[글의 맥락]');
+        (data.sentenceAnalyses || []).forEach(item => {
+          lines.push(`문장 ${item.sentenceNumber}: ${item.sentence}`);
+          lines.push(`- 역할: ${item.sentenceRole || ''}`);
+          lines.push(`- 맥락 키워드: ${(item.coreWords || item.keyKeywords || []).join(', ')}`);
+          lines.push(`- 연결 키워드: ${(item.connectionKeywords || []).join(', ')}`);
+        });
+        lines.push('');
+      }
+      if (sections.includes('flowStructure')) {
+        lines.push('[전체 흐름]');
+        (data.flowStructure || []).forEach(item => lines.push(`${item.label}: ${item.description}`));
+        lines.push('');
+      }
+      if (sections.includes('summarySentence')) {
+        lines.push('[요약 문장]');
+        lines.push(data.summarySentence || '');
+        lines.push('');
+      }
+      if (sections.includes('topic')) {
+        lines.push('[글의 주제]');
+        lines.push(`한국어: ${topic.korean || ''}`);
+        lines.push(`English: ${topic.english || ''}`);
+        lines.push('');
+      }
+      if (sections.includes('vocabulary')) {
+        lines.push('[단어 정리]');
+        (data.vocabulary || []).forEach(item => {
+          const pos = item.partOfSpeech || guessPOS(item.word || '');
+          const base = normalizeBaseForm(item.word || '', pos);
+          lines.push(`${base} | ${pos} | ${item.meaning || ''} | 동의어: ${(item.synonyms || []).join(', ')}`);
+        });
+      }
+      return lines.join('\n');
+    }
+    async function copyText(text) {
+      if (!text) return alert('복사할 분석 결과가 없습니다.');
+      try { await navigator.clipboard.writeText(text); }
+      catch {
+        const temp = document.createElement('textarea'); temp.value = text; document.body.appendChild(temp); temp.select(); document.execCommand('copy'); document.body.removeChild(temp);
+      }
+      alert('복사되었습니다.');
+    }
+    function escapeHtml(value) {
+      return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+    $('analyzeBtn').addEventListener('click', analyze);
+    $('resetBtn').addEventListener('click', () => {
+      $('passageInput').value = '';
+      latestResult = null;
+      latestPassage = '';
+      setStatus('', '분석 대기 중');
+      $('resultArea').className = 'empty';
+      $('resultArea').innerHTML = `<div><svg width="190" viewBox="0 0 260 180" aria-hidden="true"><rect x="44" y="71" width="170" height="78" rx="18" fill="#fff8ee" stroke="#ead6c1" stroke-width="3"/><path d="M54 143V79c0-10 7-17 17-17h48c12 0 24 6 33 16 9-10 21-16 33-16h8c10 0 17 7 17 17v64" fill="#fffdf8" stroke="#ead6c1" stroke-width="4"/><line x1="132" y1="75" x2="132" y2="146" stroke="#ead6c1" stroke-width="4"/><circle cx="54" cy="39" r="17" fill="#ffe4a8"/><circle cx="205" cy="42" r="18" fill="#d9f4e9"/><circle cx="226" cy="70" r="12" fill="#dcecff"/><path d="M82 100h34M82 119h26M154 100h32M154 119h23" stroke="#efdac3" stroke-width="7" stroke-linecap="round"/></svg><h2>분석 결과가 여기에 표시됩니다.</h2></div>`;
+    });
+    $('copyBtn').addEventListener('click', () => copyText(worksheet(latestResult, selectedSections())));
+    $('printBtn').addEventListener('click', () => window.print());
+  </script>
+</body>
+</html>
