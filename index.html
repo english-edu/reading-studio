@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Interactive Reading Studio</title>
+  <style>
+    :root {
+      --cream: #fffaf1;
+      --white: #fffefb;
+      --ink: #243044;
+      --muted: #766b5e;
+      --line: #eadbc8;
+      --peach: #ff9f7f;
+      --peach-dark: #ee7556;
+      --yellow: #ffe4a8;
+      --mint: #d9f4e9;
+      --sky: #dcecff;
+      --pink: #ffe3ee;
+      --green: #e9f8dc;
+      --shadow: 0 22px 55px rgba(119, 83, 45, .13);
+      --soft-shadow: 0 10px 26px rgba(119, 83, 45, .08);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(255, 218, 135, .55), transparent 20%),
+        radial-gradient(circle at 92% 10%, rgba(255, 202, 222, .62), transparent 18%),
+        radial-gradient(circle at 82% 80%, rgba(205, 235, 255, .65), transparent 24%),
+        linear-gradient(180deg, #fff8ee 0%, #fffdf9 52%, #f7fbff 100%);
+      min-height: 100vh;
+      line-height: 1.65;
+    }
+
+    .wrap {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 0 18px;
+    }
+
+    header {
+      padding: 26px 0 18px;
+    }
+
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 20px;
+      align-items: center;
+      min-height: 250px;
+      padding: 30px 34px;
+      border: 1px solid rgba(234, 219, 200, .95);
+      border-radius: 34px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.80), rgba(255,248,238,.94)),
+        linear-gradient(135deg, #fff2e4, #f5fbff);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      left: -48px;
+      bottom: -58px;
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      background: rgba(255, 228, 168, .7);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      top: -46px;
+      right: -44px;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background: rgba(217, 244, 233, .9);
+    }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: clamp(32px, 5vw, 58px);
+      line-height: 1.05;
+      letter-spacing: -0.055em;
+      color: #283449;
+      white-space: nowrap;
+    }
+
+    .hero-art {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      min-height: 210px;
+    }
+
+    main {
+      padding: 6px 0 42px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, .88fr) minmax(440px, 1.12fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .90);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--soft-shadow);
+      padding: 22px;
+      backdrop-filter: blur(8px);
+    }
+
+    .input-card {
+      position: sticky;
+      top: 18px;
+    }
+
+    .card-title {
+      margin: 0 0 14px;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: -0.04em;
+    }
+
+    label.group-label {
+      display: block;
+      margin: 18px 0 9px;
+      color: #5f5144;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 360px;
+      resize: vertical;
+      border: 1.5px solid #eadbc8;
+      border-radius: 24px;
+      padding: 18px;
+      background: #fffefb;
+      color: var(--ink);
+      font: inherit;
+      line-height: 1.72;
+      outline: none;
+      box-shadow: inset 0 2px 8px rgba(120, 80, 30, .03);
+    }
+
+    textarea:focus {
+      border-color: #ffb28e;
+      box-shadow: 0 0 0 6px rgba(255, 159, 127, .14), inset 0 2px 8px rgba(120, 80, 30, .03);
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .choice {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      min-height: 50px;
+      padding: 12px 13px;
+      border: 1px solid #eadbc8;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fffdf8, #fff8ef);
+      color: #4b4037;
+      font-size: 14px;
+      font-weight: 850;
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .choice:hover {
+      transform: translateY(-1px);
+      border-color: #ffbea3;
+    }
+
+    .choice input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--peach-dark);
+      flex: 0 0 auto;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 17px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 950;
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(83, 62, 43, .13);
+    }
+
+    .primary {
+      color: white;
+      background: linear-gradient(135deg, var(--peach), var(--peach-dark));
+    }
+
+    .plain {
+      color: #5c5147;
+      background: #f7efe5;
+      border: 1px solid #eadbc8;
+    }
+
+    .result-card {
+      min-height: 720px;
+    }
+
+    .result-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: #766b5e;
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      background: #c8bdaf;
+    }
+
+    .dot.loading {
+      background: #ff9f7f;
+      animation: pulse 1s infinite;
+    }
+
+    .dot.ok { background: #62bf90; }
+    .dot.fail { background: #f37b7b; }
+
+    @keyframes pulse {
+      50% { opacity: .35; transform: scale(.85); }
+    }
+
+    .result {
+      display: grid;
+      gap: 16px;
+    }
+
+    .empty {
+      min-height: 590px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 2px dashed #e8d7c4;
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,248,238,.88)),
+        repeating-linear-gradient(-45deg, rgba(255,228,168,.16) 0, rgba(255,228,168,.16) 14px, rgba(255,255,255,.16) 14px, rgba(255,255,255,.16) 28px);
+      color: #827364;
+      padding: 26px;
+    }
+
+    .empty h2 {
+      margin: 10px 0 0;
+      font-size: 22px;
+      letter-spacing: -0.04em;
+    }
+
+    .section {
+      border: 1px solid #eadbc8;
+      border-radius: 24px;
+      padding: 18px;
+      background: #fffefb;
+      box-shadow: 0 8px 20px rgba(119, 83, 45, .05);
+    }
+
+    .section-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 14px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #fff1df;
+      color: #8b5a31;
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .sentence-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sentence {
+      padding: 15px;
+      border-radius: 21px;
+      border: 1px solid #efdcc8;
+      background: linear-gradient(180deg, #fff9f2, #ffffff);
+    }
+
+    .sentence-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 9px;
+    }
+
+    .sentence-num {
+      font-weight: 950;
+      color: #384152;
+    }
+
+    .role {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #e6f5ed;
+      color: #236044;
+      font-size: 12px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .sentence-text {
+      margin: 0 0 11px;
+      color: #384152;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mini {
+      padding: 11px 12px;
+      border: 1px solid #eee2d4;
+      border-radius: 17px;
+      background: #fff;
+      min-height: 70px;
+    }
+
+    .mini b,
+    .flow b,
+    .summary b,
+    .topic b,
+    .vocab b,
+    .core b {
+      display: block;
+      margin-bottom: 5px;
+      color: #7c5c3e;
+      font-size: 13px;
+    }
+
+    .core-grid, .flow-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .core, .flow {
+      padding: 13px 15px;
+      border: 1px solid #e2eddf;
+      border-radius: 19px;
+      background: linear-gradient(180deg, #fafff6, #ffffff);
+    }
+
+    .summary, .topic {
+      padding: 15px;
+      border: 1px solid #e1e8f5;
+      border-radius: 20px;
+      background: linear-gradient(180deg, #f7fbff, #ffffff);
+    }
+
+    .vocab-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .vocab {
+      padding: 15px;
+      border: 1px solid #dbeee5;
+      border-radius: 20px;
+      background: linear-gradient(180deg, #f8fff9, #ffffff);
+    }
+
+    .word {
+      margin-bottom: 2px;
+      color: #1f5c43;
+      font-size: 19px;
+      font-weight: 1000;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 1030px) {
+      .hero, .layout { grid-template-columns: 1fr; }
+      h1 { white-space: normal; }
+      .input-card { position: static; }
+    }
+
+    @media (max-width: 620px) {
+      .wrap { padding: 0 12px; }
+      .hero { padding: 23px 20px; border-radius: 26px; }
+      .hero-art { min-height: 160px; }
+      .card { padding: 17px; border-radius: 23px; }
+      .choice-grid, .mini-grid, .vocab-grid { grid-template-columns: 1fr; }
+      .buttons button { flex: 1 1 100%; }
+      textarea { min-height: 280px; }
+    }
+
+    @media print {
+      header, .input-card, .result-top { display: none !important; }
+      body { background: white; }
+      .card, .section { box-shadow: none; }
+      .result-card { border: 0; }
+      .section, .sentence, .vocab, .summary, .topic, .flow, .core { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <section class="hero">
+        <div>
+          <h1>AI Interactive Reading Studio</h1>
+        </div>
+
+        <div class="hero-art" aria-hidden="true">
+          <svg width="100%" viewBox="0 0 520 310" role="img">
+            <rect x="18" y="20" width="484" height="260" rx="34" fill="#fff8ee"/>
+            <circle cx="84" cy="68" r="28" fill="#ffe2a8"/>
+            <circle cx="444" cy="73" r="22" fill="#ffdceb"/>
+            <circle cx="408" cy="42" r="12" fill="#d8ecff"/>
+            <path d="M95 226c30-35 68-52 116-52 38 0 67 12 94 36 27-24 56-36 94-36 47 0 86 17 116 52v31H95z" fill="#fffdf8" stroke="#edd9c5" stroke-width="4"/>
+            <path d="M95 226c0-28 15-49 42-62 25-12 58-8 93 11v83c-41-20-78-25-112-12-13 5-23 11-23 11z" fill="#fff6e7"/>
+            <path d="M515 226c0-28-15-49-42-62-25-12-58-8-93 11v83c41-20 78-25 112-12 13 5 23 11 23 11z" fill="#fff6e7"/>
+            <line x1="305" y1="184" x2="305" y2="258" stroke="#edd9c5" stroke-width="4"/>
+            <rect x="97" y="91" width="130" height="82" rx="20" fill="#dcecff" stroke="#c6ddf9"/>
+            <rect x="122" y="112" width="80" height="10" rx="5" fill="#ffffff"/>
+            <rect x="122" y="133" width="58" height="10" rx="5" fill="#ffffff"/>
+            <circle cx="158" cy="82" r="24" fill="#ffb294"/>
+            <text x="146" y="89" font-size="20" font-weight="900" fill="#8a3e2d">A</text>
+            <rect x="280" y="75" width="130" height="94" rx="20" fill="#d9f4e9" stroke="#bee6d8"/>
+            <rect x="303" y="100" width="83" height="10" rx="5" fill="#ffffff"/>
+            <rect x="303" y="123" width="58" height="10" rx="5" fill="#ffffff"/>
+            <circle cx="386" cy="179" r="24" fill="#ffe0a3"/>
+            <text x="374" y="186" font-size="20" font-weight="900" fill="#765118">B</text>
+            <rect x="201" y="111" width="118" height="78" rx="20" fill="#ffe4ef" stroke="#f7cbdc"/>
+            <path d="M230 145h58M230 164h42" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="253" cy="99" r="19" fill="#bde7ff"/>
+            <text x="243" y="105" font-size="16" font-weight="900" fill="#245c75">C</text>
+            <path d="M73 116c21 8 30 18 28 31M437 132c-18 8-25 19-21 34" fill="none" stroke="#eacfb5" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="62" cy="116" r="8" fill="#ff9f7f"/>
+            <circle cx="448" cy="128" r="8" fill="#95d9c4"/>
+            <text x="206" y="257" font-size="14" font-weight="800" fill="#9a7654">read · think · organize</text>
+          </svg>
+        </div>
+      </section>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <section class="layout">
+        <article class="card input-card">
+          <h2 class="card-title">영어 지문 입력</h2>
+          <textarea id="passageInput" placeholder="여기에 영어 지문을 붙여넣으세요."></textarea>
+
+          <label class="group-label">AI 분석 자료 선택</label>
+          <div class="choice-grid">
+            <label class="choice"><input type="checkbox" name="sections" value="coreWords" checked> 핵심 단어</label>
+            <label class="choice"><input type="checkbox" name="sections" value="sentenceFunctions" checked> 문장 기능</label>
+            <label class="choice"><input type="checkbox" name="sections" value="flowStructure" checked> 전체 흐름</label>
+            <label class="choice"><input type="checkbox" name="sections" value="summarySentence" checked> 요약 문장</label>
+            <label class="choice"><input type="checkbox" name="sections" value="topic" checked> 글의 주제</label>
+            <label class="choice"><input type="checkbox" name="sections" value="vocabulary" checked> 단어 정리</label>
+          </div>
+
+          <div class="buttons">
+            <button class="primary" id="analyzeBtn">지문 분석</button>
+            <button class="plain" id="resetBtn">초기화</button>
+          </div>
+        </article>
+
+        <article class="card result-card">
+          <div class="result-top">
+            <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">분석 대기 중</span></div>
+            <div class="buttons" style="margin:0">
+              <button class="plain" id="copyBtn">분석 자료 복사</button>
+              <button class="plain" id="printBtn">인쇄/PDF</button>
+            </div>
+          </div>
+
+          <section id="resultArea" class="empty">
+            <div>
+              <svg width="190" viewBox="0 0 260 180" aria-hidden="true">
+                <rect x="44" y="71" width="170" height="78" rx="18" fill="#fff8ee" stroke="#ead6c1" stroke-width="3"/>
+                <path d="M54 143V79c0-10 7-17 17-17h48c12 0 24 6 33 16 9-10 21-16 33-16h8c10 0 17 7 17 17v64" fill="#fffdf8" stroke="#ead6c1" stroke-width="4"/>
+                <line x1="132" y1="75" x2="132" y2="146" stroke="#ead6c1" stroke-width="4"/>
+                <circle cx="54" cy="39" r="17" fill="#ffe4a8"/>
+                <circle cx="205" cy="42" r="18" fill="#d9f4e9"/>
+                <circle cx="226" cy="70" r="12" fill="#dcecff"/>
+                <path d="M82 100h34M82 119h26M154 100h32M154 119h23" stroke="#efdac3" stroke-width="7" stroke-linecap="round"/>
+              </svg>
+              <h2>분석 결과가 여기에 표시됩니다.</h2>
+            </div>
+          </section>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAfWL0iiBxTh9ixjBU0f8V0mGTvO9N0GtA1bcfyf13zXbaml8q-zMWlMoilxJYo4bX/exec";
+    const $ = (id) => document.getElementById(id);
+    let latestResult = null;
+
+    const STOP = new Set([
+      'the','and','that','this','with','from','have','has','are','was','were','will','would','could','should','there','their','they','them','than','then','into','also','only','very','more','most','many','much','about','when','what','which','while','where','between','through','some','such','itself','actually','those','these','being','your','just','people','students','student'
+    ]);
+
+    const VOCAB = {
+      digital: { meaning: '디지털의', pos: '형용사', syn: ['online', 'electronic'] },
+      technology: { meaning: '기술', pos: '명사', syn: ['tech', 'innovation'] },
+      weakening: { meaning: '약화시키는', pos: '동사/분사', syn: ['reducing', 'undermining'] },
+      habits: { meaning: '습관', pos: '명사', syn: ['patterns', 'routines'] },
+      information: { meaning: '정보', pos: '명사', syn: ['data', 'knowledge'] },
+      concentration: { meaning: '집중력', pos: '명사', syn: ['focus', 'attention'] },
+      support: { meaning: '지원하다', pos: '동사', syn: ['help', 'assist'] },
+      identify: { meaning: '파악하다', pos: '동사', syn: ['recognize', 'find'] },
+      structure: { meaning: '구조', pos: '명사', syn: ['organization', 'framework'] },
+      vocabulary: { meaning: '어휘', pos: '명사', syn: ['words', 'lexis'] },
+      interactive: { meaning: '상호작용적인', pos: '형용사', syn: ['engaging', 'responsive'] },
+      analyze: { meaning: '분석하다', pos: '동사', syn: ['examine', 'inspect'] },
+      functions: { meaning: '기능하다', pos: '동사', syn: ['works', 'serves'] },
+      topic: { meaning: '주제', pos: '명사', syn: ['subject', 'theme'] },
+      supporting: { meaning: '뒷받침하는', pos: '형용사', syn: ['backing', 'confirming'] },
+      example: { meaning: '예시', pos: '명사', syn: ['instance', 'illustration'] },
+      conclusion: { meaning: '결론', pos: '명사', syn: ['ending', 'result'] },
+      active: { meaning: '능동적인', pos: '형용사', syn: ['engaged', 'dynamic'] },
+      meaningful: { meaning: '의미 있는', pos: '형용사', syn: ['valuable', 'significant'] },
+      experience: { meaning: '경험', pos: '명사', syn: ['activity', 'encounter'] }
+    };
+
+    function selectedSections() {
+      return [...document.querySelectorAll('input[name="sections"]:checked')].map(el => el.value);
+    }
+
+    function setStatus(type, text) {
+      $('statusDot').className = 'dot' + (type ? ' ' + type : '');
+      $('statusText').textContent = text;
+    }
+
+    function splitSentences(text) {
+      return (text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || []).map(s => s.trim()).filter(Boolean);
+    }
+
+    function tokenize(text) {
+      return (text.toLowerCase().match(/[a-z][a-z-]{2,}/g) || [])
+        .map(w => w.replace(/^-|-$/g, ''))
+        .filter(w => !STOP.has(w));
+    }
+
+    function topWords(words, limit = 4) {
+      const freq = {};
+      words.forEach(w => freq[w] = (freq[w] || 0) + 1);
+      return Object.entries(freq)
+        .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)
+        .slice(0, limit)
+        .map(([word]) => word);
+    }
+
+    function markers(sentence) {
+      const lower = sentence.toLowerCase();
+      return ['because','as a result','however','in addition','for example','therefore','but','so','while','although']
+        .filter(m => lower.includes(m));
+    }
+
+    function role(sentence, index, total) {
+      const s = sentence.toLowerCase();
+      if (index === 0) return '중심 소재 제시';
+      if (s.includes('for example') || s.includes('for instance')) return '예시 제시';
+      if (s.includes('however') || s.includes('but') || s.includes('although')) return '대조/전환';
+      if (s.includes('because') || s.includes('as a result') || s.includes('in addition')) return '세부 설명';
+      if (s.includes('therefore') || s.includes('thus') || index === total - 1) return '결론/정리';
+      return '부연 설명';
+    }
+
+    function pos(word) {
+      if (VOCAB[word]) return VOCAB[word].pos;
+      if (word.endsWith('ly')) return '부사';
+      if (word.endsWith('tion') || word.endsWith('ity') || word.endsWith('ness') || word.endsWith('ment')) return '명사';
+      if (word.endsWith('ing') || word.endsWith('ed')) return '동사/분사';
+      if (word.endsWith('ive') || word.endsWith('al') || word.endsWith('ful') || word.endsWith('ous')) return '형용사';
+      return '문맥상 확인';
+    }
+
+    function meaning(word) {
+      return VOCAB[word]?.meaning || '문맥 속 의미 확인';
+    }
+
+    function synonyms(word) {
+      return VOCAB[word]?.syn || ['synonym check needed'];
+    }
+
+    function makePreviewAnalysis(text) {
+      const sentences = splitSentences(text);
+      const tokensBySentence = sentences.map(tokenize);
+      const sentenceAnalyses = sentences.map((sentence, i) => {
+        const current = tokensBySentence[i];
+        const before = tokensBySentence[i - 1] || [];
+        const after = tokensBySentence[i + 1] || [];
+        const connected = [...new Set(current.filter(w => before.includes(w) || after.includes(w)))];
+        return {
+          sentenceNumber: i + 1,
+          sentence,
+          coreWords: topWords(current, 4),
+          connectionKeywords: [...new Set([...markers(sentence), ...connected])].slice(0, 4),
+          sentenceRole: role(sentence, i, sentences.length)
+        };
+      });
+
+      return {
+        sentenceAnalyses,
+        flowStructure: buildFlow(sentenceAnalyses),
+        topic: buildTopic(sentenceAnalyses),
+        summarySentence: buildSummary(sentenceAnalyses),
+        vocabulary: buildVocabulary(sentenceAnalyses)
+      };
+    }
+
+    function buildFlow(items) {
+      const labels = {
+        '중심 소재 제시': '중심 소재',
+        '세부 설명': '세부 설명',
+        '부연 설명': '부연 설명',
+        '예시 제시': '예시/근거',
+        '대조/전환': '전환',
+        '결론/정리': '결론'
+      };
+      const suffix = {
+        '중심 소재': '제시',
+        '세부 설명': '설명',
+        '부연 설명': '보충',
+        '예시/근거': '제시',
+        '전환': '전환',
+        '결론': '정리'
+      };
+      const used = new Set();
+      const flow = [];
+      items.forEach(item => {
+        const label = labels[item.sentenceRole] || '세부 설명';
+        if (!used.has(label)) {
+          used.add(label);
+          flow.push({
+            label,
+            description: `${label}: ${trim(item.sentence, 95)} ${suffix[label]}`
+          });
+        }
+      });
+      return flow;
+    }
+
+    function buildTopic(items) {
+      const words = topWords(items.flatMap(item => item.coreWords || []), 3);
+      return words.length ? `${words.join(', ')}를 중심으로 글의 관점과 의미를 설명하는 글` : '글의 핵심 내용을 설명하는 글';
+    }
+
+    function buildSummary(items) {
+      if (!items.length) return '';
+      const first = trim(items[0].sentence, 78);
+      const last = trim(items[items.length - 1].sentence, 78);
+      return `${first} 그리고 ${last}`;
+    }
+
+    function buildVocabulary(items) {
+      const words = topWords(items.flatMap(item => item.coreWords || []), 8);
+      return words.map(word => ({
+        word,
+        partOfSpeech: pos(word),
+        meaning: meaning(word),
+        synonyms: synonyms(word)
+      }));
+    }
+
+    function trim(text, max) {
+      return text.length > max ? text.slice(0, max - 1) + '…' : text;
+    }
+
+    async function callAppsScript(text, sections) {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ text, selectedSections: sections })
+      });
+      if (!res.ok) throw new Error('Apps Script response error');
+      return await res.json();
+    }
+
+    async function analyze() {
+      const text = $('passageInput').value.trim();
+      const sections = selectedSections();
+      if (!text) return alert('영어 지문을 입력하세요.');
+      if (!sections.length) return alert('AI 분석 자료를 한 개 이상 선택하세요.');
+
+      setStatus('loading', '분석 중...');
+      try {
+        if (!APPS_SCRIPT_URL) throw new Error('Apps Script URL is empty');
+        latestResult = await callAppsScript(text, sections);
+        setStatus('ok', '분석 완료');
+      } catch (e) {
+        latestResult = makePreviewAnalysis(text);
+        setStatus('fail', '미리보기 분석 완료');
+      }
+      render(latestResult, sections);
+    }
+
+    function render(data, sections) {
+      const resultArea = $('resultArea');
+      resultArea.className = 'result';
+      let html = '';
+
+      if (sections.includes('coreWords')) {
+        html += `
+          <section class="section">
+            <div class="section-title">핵심 단어</div>
+            <div class="core-grid">
+              ${(data.sentenceAnalyses || []).map(item => `
+                <div class="core">
+                  <b>문장 ${item.sentenceNumber}</b>
+                  ${escapeHtml((item.coreWords || item.keyKeywords || []).join(', ') || '-')}
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        `;
+      }
+
+      if (sections.includes('sentenceFunctions')) {
+        html += `
+          <section class="section">
+            <div class="section-title">문장 기능</div>
+            <div class="sentence-list">
+              ${(data.sentenceAnalyses || []).map(item => `
+                <article class="sentence">
+                  <div class="sentence-head">
+                    <span class="sentence-num">문장 ${item.sentenceNumber}</span>
+                    <span class="role">${escapeHtml(item.sentenceRole || '')}</span>
+                  </div>
+                  <p class="sentence-text">${escapeHtml(item.sentence || '')}</p>
+                  <div class="mini-grid">
+                    <div class="mini"><b>연결 키워드</b>${escapeHtml((item.connectionKeywords || []).join(', ') || '-')}</div>
+                    <div class="mini"><b>문장 기능</b>${escapeHtml(item.sentenceRole || '-')}</div>
+                  </div>
+                </article>
+              `).join('')}
+            </div>
+          </section>
+        `;
+      }
+
+      if (sections.includes('flowStructure')) {
+        html += `
+          <section class="section">
+            <div class="section-title">전체 흐름</div>
+            <div class="flow-list">
+              ${(data.flowStructure || []).map(item => `
+                <div class="flow">
+                  <b>${escapeHtml(item.label || '')}</b>
+                  <div>${escapeHtml(item.description || '')}</div>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        `;
+      }
+
+      if (sections.includes('summarySentence')) {
+        html += `
+          <section class="section">
+            <div class="section-title">요약 문장</div>
+            <div class="summary">${escapeHtml(data.summarySentence || '')}</div>
+          </section>
+        `;
+      }
+
+      if (sections.includes('topic')) {
+        html += `
+          <section class="section">
+            <div class="section-title">글의 주제</div>
+            <div class="topic">${escapeHtml(data.topic || '')}</div>
+          </section>
+        `;
+      }
+
+      if (sections.includes('vocabulary')) {
+        html += `
+          <section class="section">
+            <div class="section-title">단어 정리</div>
+            <div class="vocab-grid">
+              ${(data.vocabulary || []).map(item => `
+                <div class="vocab">
+                  <div class="word">${escapeHtml(item.word || '')}</div>
+                  <div class="muted">${escapeHtml(item.partOfSpeech || '')}</div>
+                  <div style="margin-top:9px;"><b>뜻</b>${escapeHtml(item.meaning || '')}</div>
+                  <div style="margin-top:9px;"><b>동의어</b>${escapeHtml((item.synonyms || []).join(', ') || '-')}</div>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        `;
+      }
+
+      resultArea.innerHTML = html || '<div class="empty"><h2>선택된 항목이 없습니다.</h2></div>';
+    }
+
+    function worksheet(data, sections) {
+      if (!data) return '';
+      const lines = ['AI Interactive Reading Studio', ''];
+
+      if (sections.includes('coreWords')) {
+        lines.push('[핵심 단어]');
+        (data.sentenceAnalyses || []).forEach(item => {
+          lines.push(`문장 ${item.sentenceNumber}: ${(item.coreWords || item.keyKeywords || []).join(', ')}`);
+        });
+        lines.push('');
+      }
+
+      if (sections.includes('sentenceFunctions')) {
+        lines.push('[문장 기능]');
+        (data.sentenceAnalyses || []).forEach(item => {
+          lines.push(`문장 ${item.sentenceNumber}: ${item.sentence}`);
+          lines.push(`- 연결 키워드: ${(item.connectionKeywords || []).join(', ')}`);
+          lines.push(`- 문장 기능: ${item.sentenceRole || ''}`);
+        });
+        lines.push('');
+      }
+
+      if (sections.includes('flowStructure')) {
+        lines.push('[전체 흐름]');
+        (data.flowStructure || []).forEach(item => lines.push(`${item.label}: ${item.description}`));
+        lines.push('');
+      }
+
+      if (sections.includes('summarySentence')) {
+        lines.push('[요약 문장]');
+        lines.push(data.summarySentence || '');
+        lines.push('');
+      }
+
+      if (sections.includes('topic')) {
+        lines.push('[글의 주제]');
+        lines.push(data.topic || '');
+        lines.push('');
+      }
+
+      if (sections.includes('vocabulary')) {
+        lines.push('[단어 정리]');
+        (data.vocabulary || []).forEach(item => {
+          lines.push(`${item.word} | ${item.partOfSpeech || ''} | ${item.meaning || ''} | 동의어: ${(item.synonyms || []).join(', ')}`);
+        });
+      }
+
+      return lines.join('\n');
+    }
+
+    async function copyText(text) {
+      if (!text) return alert('복사할 분석 결과가 없습니다.');
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const temp = document.createElement('textarea');
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+      }
+      alert('복사되었습니다.');
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    $('analyzeBtn').addEventListener('click', analyze);
+    $('resetBtn').addEventListener('click', () => {
+      $('passageInput').value = '';
+      latestResult = null;
+      setStatus('', '분석 대기 중');
+      $('resultArea').className = 'empty';
+      $('resultArea').innerHTML = `
+        <div>
+          <svg width="190" viewBox="0 0 260 180" aria-hidden="true">
+            <rect x="44" y="71" width="170" height="78" rx="18" fill="#fff8ee" stroke="#ead6c1" stroke-width="3"/>
+            <path d="M54 143V79c0-10 7-17 17-17h48c12 0 24 6 33 16 9-10 21-16 33-16h8c10 0 17 7 17 17v64" fill="#fffdf8" stroke="#ead6c1" stroke-width="4"/>
+            <line x1="132" y1="75" x2="132" y2="146" stroke="#ead6c1" stroke-width="4"/>
+            <circle cx="54" cy="39" r="17" fill="#ffe4a8"/>
+            <circle cx="205" cy="42" r="18" fill="#d9f4e9"/>
+            <circle cx="226" cy="70" r="12" fill="#dcecff"/>
+            <path d="M82 100h34M82 119h26M154 100h32M154 119h23" stroke="#efdac3" stroke-width="7" stroke-linecap="round"/>
+          </svg>
+          <h2>분석 결과가 여기에 표시됩니다.</h2>
+        </div>`;
+    });
+    $('copyBtn').addEventListener('click', () => copyText(worksheet(latestResult, selectedSections())));
+    $('printBtn').addEventListener('click', () => window.print());
+  </script>
+</body>
+</html>
